@@ -182,7 +182,7 @@ You're not training a local model. You're training a harness. The LLM stays the 
 
 - Pattern inspired by [autoresearch](https://github.com/karpathy/autoresearch) by Andrej Karpathy
 - Harness engineering concepts from [OpenAI's Codex team](https://openai.com/index/harness-engineering/) and [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)
-- Born from building [Penso](https://penso.so), an AI-native research tool
+- Born from ZC, founder of [Penso](https://penso.so) and Serendipity Ventures
 
 ## License
 
