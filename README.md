@@ -120,7 +120,7 @@ autoloop/benchmarks/
 
 ```bash
 # Clone
-git clone https://github.com/BitTheDust94/vibe-harness.git
+git clone https://github.com/ericsonglab/vibe-harness.git
 
 # Copy into your project's .claude/ directory
 cp -r vibe-harness/autoloop your-project/.claude/

@@ -1,11 +1,13 @@
 #!/bin/bash
-# run-loop.sh — 夜间自动优化循环
-# 用法：直接运行，或通过 cron 调用
-# crontab: 0 2 * * * /Users/chen/Flow插件/flow-2.0/.claude/autoloop/run-loop.sh
+# run-loop.sh — Batch self-iteration (optional, can also use /autoloop interactively)
+# Usage: ./run-loop.sh or via cron
+# crontab: 0 2 * * * /path/to/your/project/.claude/autoloop/run-loop.sh
 
 set -euo pipefail
 
-PROJECT_DIR="/Users/chen/Flow插件/flow-2.0"
+# Auto-detect project root (two levels up from this script)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 AUTOLOOP_DIR="$PROJECT_DIR/.claude/autoloop"
 LOGFILE="$AUTOLOOP_DIR/feedback-log.jsonl"
 PROGRAM="$AUTOLOOP_DIR/program.md"
@@ -22,8 +24,8 @@ fi
 SIGNAL_COUNT=$(wc -l < "$LOGFILE" | tr -d ' ')
 echo "Signal count: $SIGNAL_COUNT"
 
-if [ "$SIGNAL_COUNT" -lt 10 ]; then
-    echo "Not enough signals ($SIGNAL_COUNT < 10). Skipping."
+if [ "$SIGNAL_COUNT" -lt 20 ]; then
+    echo "Not enough signals ($SIGNAL_COUNT < 20). Skipping."
     exit 0
 fi
 
