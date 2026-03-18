@@ -1,19 +1,19 @@
 # vibe-harness
 
-**Your AI output gets better while you sleep.**
+**Your AI learns your standards as you work.**
 
-A self-improving harness for anyone using AI agents in professional work — coding, finance, research, pharma, legal, design, and more. Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), but instead of optimizing model weights, it optimizes *how you work with AI*.
+A self-improving harness for Claude Code. Every time you accept, reject, or modify AI output, the system silently captures that signal and iterates — refining rules, constraints, and domain guidelines in real time, so AI output gets progressively closer to your professional standards.
 
-Every time you accept, reject, or modify AI output during your daily work, the system silently logs preference signals. Overnight, an optimization loop analyzes patterns and tunes your harness — rules, hooks, prompt templates, domain guidelines — so tomorrow's AI output is closer to what you actually want.
+Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) — but instead of running overnight experiments, vibe-harness learns continuously from your natural workflow. No extra steps. Just work as usual, and the harness evolves around you.
 
 ```
-You work with AI → signals accumulate → overnight loop analyzes →
-harness improves → next day's output is better → repeat
+You work with AI → accept / reject / modify → signal captured →
+harness self-iterates → next output is better → repeat
 ```
 
 ## The Problem
 
-AI output quality is inconsistent — whether you're writing code, drafting investment memos, reviewing contracts, analyzing clinical trial data, or writing research papers.
+AI output quality is inconsistent — whether you're writing code, drafting investment memos, reviewing contracts, or analyzing clinical trial data.
 
 You correct the same mistakes repeatedly. You know what "good" looks like in your domain, but that knowledge lives in your head, not in your tooling. Every new session starts from zero — AI doesn't remember that you rejected the same bad pattern yesterday.
 
@@ -21,17 +21,15 @@ You correct the same mistakes repeatedly. You know what "good" looks like in you
 
 ## The Solution: A Harness That Learns From You
 
-Karpathy showed that a single metric + a modification loop + overnight experiments = autonomous improvement. We apply the same pattern to the *harness* itself:
+Your professional judgment is the training signal. Every "不对", every "perfect", every "改一下" is a data point. vibe-harness captures these signals in real time, identifies patterns, and updates the rules that guide AI — so the same mistake doesn't happen twice.
 
-| Karpathy's autoresearch | vibe-harness |
+| What | How |
 |---|---|
-| `train.py` (agent modifies) | Rules, hooks, templates (agent modifies) |
-| `prepare.py` (fixed evaluation) | `benchmarks/*.md` (domain-specific evaluation tasks) |
-| `program.md` (human instructions) | `program.md` (human instructions) |
-| `results.tsv` (experiment log) | `experiments.tsv` (experiment log) |
-| `val_bpb` (single metric) | Benchmark pass rate (multi-dimensional) |
-| GPU training loop | Harness optimization loop |
-| Modify code to lower loss | Modify rules to improve output quality |
+| You say "不对" or "wrong" | Logged as rejection signal → pattern analyzed → new rule added |
+| You say "好" or "perfect" | Logged as acceptance signal → successful pattern reinforced |
+| You say "改一下" or "adjust" | Logged as modification signal → constraint refined |
+| Signals accumulate | `/autoloop` analyzes patterns → proposes harness improvements |
+| Harness updates | Next AI output follows updated rules → fewer corrections needed |
 
 **You're not training a model. You're training a harness.** The LLM stays the same. What changes is how you use it — the rules it follows, the constraints it respects, the domain standards it adheres to.
 
@@ -57,32 +55,33 @@ All signals accumulate in `feedback-log.jsonl`:
 {"ts":"2026-03-18T15:01:42","signal":"accept","confidence":0.7,"prompt_preview":"完美，就是这个"}
 ```
 
-### 2. Overnight Optimization Loop (runs while you sleep)
+### 2. Self-Iteration (when you're ready)
 
-A scheduled job analyzes accumulated feedback and runs experiments:
+When enough signals have accumulated (typically 20+ feedback events), trigger analysis:
 
-```bash
-# Add to crontab: every night at 2am
-0 2 * * * /path/to/your/project/.claude/autoloop/run-loop.sh
+```
+/autoloop
 ```
 
-The loop:
-1. Reads `program.md` for optimization guidelines
-2. Analyzes `feedback-log.jsonl` for rejection patterns
-3. Proposes harness improvements (new rules, new hooks, adjusted templates)
-4. Runs domain benchmarks to verify improvements
-5. Keeps changes that pass, discards those that don't
-6. Logs results to `experiments.tsv`
+The agent:
+1. Reads your accumulated feedback signals
+2. Identifies rejection patterns ("60% of rejections are about missing risk factors")
+3. Proposes specific harness improvements (new rules, adjusted constraints)
+4. Runs domain benchmarks to verify improvements don't break other things
+5. Shows you what changed and why
 
-### 3. Morning Review (30 seconds)
+You review and approve. The harness is updated. Next time AI encounters the same situation, it gets it right.
 
-```bash
-cat .claude/autoloop/experiments.tsv
+### 3. Continuous Improvement
+
+The cycle never stops. As you keep working, new signals accumulate, new patterns emerge, and the harness keeps evolving. After a few weeks, AI output matches your professional standards with minimal corrections.
+
 ```
-
-> "Last night: 12 experiments. Financial modeling prompt v3 improved benchmark score from 72% to 81%. New rule added: 'Always exclude one-time items in FCF calculations'. New rule added: 'Include regulatory risk section in all pharma analysis'."
-
-You decide what to keep. One command to apply.
+Week 1:  You correct AI 10 times / day
+Week 2:  Harness has 5 new rules from your feedback → corrections drop to 6 / day
+Week 4:  15 rules accumulated → corrections drop to 3 / day
+Week 8:  AI output consistently matches your standards
+```
 
 ## Works Across Every Domain
 
@@ -100,17 +99,17 @@ Anyone using AI for professional work generates accept/reject signals. vibe-harn
 
 ### Pre-built Domain Benchmarks
 
-Each domain has a benchmark suite with 3 evaluation tasks. Pick the ones that match your work:
+Each domain has a benchmark suite with evaluation tasks. Pick the ones that match your work:
 
 ```
 autoloop/benchmarks/
 ├── coding.md          # Software development
 ├── product.md         # Product design & strategy
 ├── ui.md              # UI/UX design
-├── finance.md         # Financial analysis & modeling
+├── finance.md         # Finance & investment
 ├── research.md        # Scientific research
 ├── pharma.md          # Pharma & biotech
-└── legal.md           # Legal review & due diligence
+└── legal.md           # Legal
 ```
 
 **Don't see your domain?** Create your own `benchmarks/your-domain.md` with 3 representative tasks. The system works with any domain where you can evaluate "good vs bad" output.
@@ -131,18 +130,9 @@ cp -r vibe-harness/commands your-project/.claude/
 # Merge hook config into your .claude/settings.json (see settings-example.json)
 ```
 
-### Set up nightly loop
+### Trigger self-iteration
 
-```bash
-chmod +x your-project/.claude/autoloop/run-loop.sh
-crontab -e
-# Add:
-0 2 * * * /absolute/path/to/your/project/.claude/autoloop/run-loop.sh >> /absolute/path/to/your/project/.claude/autoloop/cron.log 2>&1
-```
-
-### Manual trigger
-
-In Claude Code, type: `/autoloop`
+In Claude Code, type `/autoloop` whenever you want the system to analyze accumulated feedback and propose improvements.
 
 ## File Structure
 
@@ -155,10 +145,10 @@ In Claude Code, type: `/autoloop`
 ├── commands/
 │   └── autoloop.md              # /autoloop slash command
 └── autoloop/
-    ├── program.md               # Optimization instructions (you edit this)
+    ├── program.md               # Self-iteration instructions (you can edit this)
     ├── feedback-log.jsonl       # Accumulated signals (auto-generated)
-    ├── experiments.tsv          # Experiment history (auto-generated)
-    ├── run-loop.sh              # Nightly execution script
+    ├── experiments.tsv          # Iteration history (auto-generated)
+    ├── run-loop.sh              # Batch execution script (optional cron)
     └── benchmarks/
         ├── coding.md            # Software development
         ├── product.md           # Product design
@@ -169,15 +159,15 @@ In Claude Code, type: `/autoloop`
         └── legal.md             # Legal
 ```
 
-## The Karpathy Loop, Applied to Professional Expertise
+## The Core Idea
 
 > "Any efficiently evaluatable metric can benefit from agent-driven optimization." — Andrej Karpathy
 
-Your professional judgment is a metric. Every accept/reject is a data point. Given enough data points, an AI agent can learn to approximate your domain standards — not by training a model, but by tuning the *rules and constraints* that guide it.
+Your professional judgment is a metric. Every accept/reject is a data point.
 
 A senior investment analyst knows that FCF calculations should exclude one-time items. A pharma researcher knows that Phase II endpoints need to be contextualized against competitor trials. A lawyer knows that indemnification clauses in SaaS agreements need mutual caps.
 
-This knowledge usually stays in their heads. vibe-harness captures it through natural work signals and encodes it into machine-enforceable rules.
+This knowledge usually stays in their heads. vibe-harness captures it through natural work signals and encodes it into machine-enforceable rules. No extra steps, no forms to fill, no feedback buttons to click. Just work as you normally do.
 
 **The harness is the product. The model is commodity.**
 
@@ -185,7 +175,6 @@ This knowledge usually stays in their heads. vibe-harness captures it through na
 
 - [Claude Code](https://claude.ai/code) CLI
 - macOS or Linux (hooks are bash scripts)
-- `claude -p` support (headless mode for overnight runs)
 
 ## Credits
 
