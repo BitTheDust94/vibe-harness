@@ -38,15 +38,19 @@ Karpathy showed that a single metric + a modification loop + overnight experimen
 Three hooks run in the background during your normal work:
 
 - **PostToolUse** → logs every Edit/Write/Bash call with file path and timestamp
-- **UserPromptSubmit** → detects feedback keywords (reject: "不对/wrong/revert", accept: "好/ok/lgtm", modify: "改一下/adjust/instead")
+- **UserPromptSubmit** → detects feedback keywords in both English and Chinese:
+  - Reject: "wrong / not right / undo / revert / 不对 / 重新 / 太丑了 / 离谱"
+  - Accept: "good / perfect / love it / lgtm / 好 / 完美 / 好看 / 就是这个"
+  - Modify: "instead / a bit / adjust / 改一下 / 稍微 / 有点像 / 太大了"
 - **SessionEnd** → records session summary
 
 All signals accumulate in `feedback-log.jsonl`:
 
 ```jsonl
-{"ts":"2026-03-18T14:32:01","type":"reject","confidence":0.8,"keyword":"不对","context":"Supabase RLS policy"}
-{"ts":"2026-03-18T14:33:15","type":"accept","confidence":0.7,"keyword":"好","context":"component styling"}
-{"ts":"2026-03-18T15:01:42","type":"tool","tool":"Edit","file":"src/components/Editor.tsx"}
+{"ts":"2026-03-18T14:32:01","signal":"reject","confidence":0.8,"prompt_preview":"不对，Supabase RLS policy should use auth.uid()"}
+{"ts":"2026-03-18T14:33:15","signal":"accept","confidence":0.7,"prompt_preview":"good, ship it"}
+{"ts":"2026-03-18T14:35:00","signal":"modify","confidence":0.6,"prompt_preview":"有点像女性胸部，改成纯光线发散"}
+{"ts":"2026-03-18T15:01:42","signal":"accept","confidence":0.7,"prompt_preview":"好看，就是这个"}
 ```
 
 ### 2. Overnight Optimization Loop (runs while you sleep)
