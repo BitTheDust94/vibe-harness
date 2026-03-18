@@ -13,9 +13,9 @@ harness improves → next day's output is better → repeat
 
 ## The Problem
 
-Vibe coding output quality is inconsistent. Sometimes AI nails it, sometimes it's way off. You correct the same mistakes repeatedly. Your taste and standards exist in your head but not in your tooling.
+AI output quality is inconsistent — whether you're writing code, drafting investment memos, reviewing contracts, or analyzing clinical trial data. Sometimes AI nails it, sometimes it's way off. You correct the same mistakes repeatedly. Your domain expertise and quality standards exist in your head but not in your tooling.
 
-**AI-generated code has 2.74x more security vulnerabilities and 8x more duplication than human-written code.** (Source: [AlterSquare, 2026](https://altersquare.io/rescued-15-plus-codebases-ai-tools-pattern/))
+**AI-generated code has 2.74x more security vulnerabilities and 8x more duplication than human-written code.** The same pattern applies to every domain — AI outputs without domain-calibrated constraints drift toward generic, mediocre results.
 
 ## The Solution: A Harness That Learns From You
 
@@ -130,15 +130,37 @@ In Claude Code, type: `/autoloop`
         └── ui.md                # UI design test tasks
 ```
 
-## Three Types of Work, One Loop
+## Works Across Every Domain
 
-vibe-harness captures signals across all types of AI-assisted work:
+vibe-harness is not just for developers. Anyone using Claude Code for professional work generates accept/reject signals that can improve their harness.
 
-| Work Type | Accept Signal | Reject Signal | What Gets Optimized |
+| Domain | Example Work | Accept Signals | Reject Signals |
 |---|---|---|---|
-| **Coding** | Merge, ship, "好" | "不对", revert, manual rewrite | CLAUDE.md rules, code templates, hooks |
-| **Product Design** | Adopt proposal, "这个方向对" | "都不够好", ask to rethink | Product discussion prompts, decision frameworks |
-| **UI Design** | "好看", use as-is | "不够优雅", "没有那个感觉" | Design system rules, component templates, style params |
+| **Software Development** | Write features, fix bugs, refactor | "ship it", "好", merge | "wrong", "不对", revert |
+| **UI/UX Design** | Components, layouts, animations | "beautiful", "好看" | "ugly", "没感觉", "太丑" |
+| **Product Management** | PRDs, specs, roadmaps | "这个方向对", adopt | "都不够好", rethink |
+| **Finance / Investment** | Financial models, memos, analysis | "数据对了", "analysis is solid" | "数字不对", "逻辑不通" |
+| **Scientific Research** | Lit reviews, data analysis, papers | "结论合理", "methodology correct" | "统计方法不对", "遗漏了" |
+| **Pharma / Biotech** | Clinical data, pipeline analysis, regulatory | "解读准确", "complete" | "安全性信号漏了", "不准" |
+| **Legal** | Contract review, case research, DD | "条款抓得准", "analysis solid" | "漏了风险点", "判例不对" |
+| **Content / Marketing** | Copywriting, strategy docs | "tone is right", "品牌调性对" | "太生硬", "不像人话" |
+
+### Domain-Specific Benchmarks
+
+Pre-built benchmark suites for different industries:
+
+```
+autoloop/benchmarks/
+├── coding.md          # Software development tasks
+├── product.md         # Product design & strategy
+├── ui.md              # UI/UX design tasks
+├── finance.md         # Financial analysis & modeling
+├── research.md        # Scientific research & papers
+├── pharma.md          # Pharma/biotech analysis
+└── legal.md           # Legal review & due diligence
+```
+
+Pick the benchmarks that match your work. The overnight loop uses them to evaluate whether harness changes actually improve output quality in your domain.
 
 ## The Karpathy Loop, Applied to Taste
 
@@ -160,7 +182,7 @@ You're not training a local model. You're training a harness. The LLM stays the 
 
 - Pattern inspired by [autoresearch](https://github.com/karpathy/autoresearch) by Andrej Karpathy
 - Harness engineering concepts from [OpenAI's Codex team](https://openai.com/index/harness-engineering/) and [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)
-- Built for the [Penso](https://penso.so) development workflow
+- Born from building [Penso](https://penso.so), an AI-native research tool
 
 ## License
 
