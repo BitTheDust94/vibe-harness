@@ -1,45 +1,46 @@
 #!/bin/bash
-# log-feedback.sh — PostToolUse hook
-# 记录 Claude 每次工具调用的结果，用于后续分析
-# 输入：stdin 接收 JSON（包含 tool_name, tool_input, tool_response）
-# 输出：静默追加到 feedback-log.jsonl
+# PostToolUse hook — silently log Edit/Write/Bash tool calls
+# Captures what the AI does so /autoloop can analyze patterns
 
-LOGDIR="$(dirname "$0")/../autoloop"
-LOGFILE="$LOGDIR/feedback-log.jsonl"
+set -e
 
-# 确保目录存在
-mkdir -p "$LOGDIR"
+DIR="$(cd "$(dirname "$0")/.." && pwd)/autoloop"
+mkdir -p "$DIR"
+LOG="$DIR/feedback-log.jsonl"
 
-# 读取 stdin
 INPUT=$(cat)
 
-# 提取关键字段，追加时间戳
-TOOL_NAME=$(echo "$INPUT" | /usr/bin/python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_name',''))" 2>/dev/null)
-TOOL_INPUT=$(echo "$INPUT" | /usr/bin/python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get('tool_input',{})))" 2>/dev/null)
-TOOL_RESPONSE=$(echo "$INPUT" | /usr/bin/python3 -c "import sys,json; d=json.load(sys.stdin); r=d.get('tool_response',{}); print(json.dumps(r) if isinstance(r,dict) else json.dumps({'raw':str(r)[:500]}))" 2>/dev/null)
-SESSION_ID=$(echo "$INPUT" | /usr/bin/python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null)
+python3 -c "
+import json, sys, datetime
 
-# 只记录有意义的工具调用（Edit, Write, Bash）
-case "$TOOL_NAME" in
-  Edit|Write|Bash)
-    /usr/bin/python3 -c "
-import json, datetime
+try:
+    data = json.loads(sys.stdin.read()) if not '''$INPUT'''.strip() else json.loads('''$INPUT''')
+except:
+    sys.exit(0)
+
+tool = data.get('tool_name', '')
+if tool not in ('Edit', 'Write', 'Bash'):
+    sys.exit(0)
+
+inp = data.get('tool_input', {})
+resp = str(data.get('tool_response', ''))[:200]
+session = data.get('session_id', 'unknown')
+
+content = str(inp.get('content', inp.get('command', '')))[:300]
+file_path = inp.get('file_path', inp.get('path', ''))
+
 entry = {
     'ts': datetime.datetime.now().isoformat(),
-    'session': '$SESSION_ID',
-    'tool': '$TOOL_NAME',
-    'input': json.loads('$TOOL_INPUT' if '$TOOL_INPUT' else '{}'),
-    'signal': 'completed'
+    'session': session,
+    'type': 'tool_use',
+    'tool': tool,
+    'file': file_path,
+    'content_preview': content[:200],
+    'response_preview': resp,
 }
-# 截断大字段
-if 'content' in entry['input']:
-    entry['input']['content'] = entry['input']['content'][:200] + '...'
-if 'command' in entry['input']:
-    entry['input']['command'] = entry['input']['command'][:300]
-print(json.dumps(entry, ensure_ascii=False))
-" >> "$LOGFILE" 2>/dev/null
-    ;;
-esac
 
-# 永远不要阻塞 Claude 的工作流
+with open('$LOG', 'a') as f:
+    f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+" 2>/dev/null
+
 exit 0

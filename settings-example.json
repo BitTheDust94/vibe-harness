@@ -2,14 +2,12 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": {
-          "tool_name": "Edit|Write|Bash"
-        },
+        "matcher": "Edit|Write|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/log-feedback.sh \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\"",
-            "async": true
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-feedback.sh\"",
+            "timeout": 5
           }
         ]
       }
@@ -19,8 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/log-user-prompt.sh \"$USER_PROMPT\"",
-            "async": true
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-user-prompt.sh\"",
+            "timeout": 5
           }
         ]
       }
@@ -30,8 +28,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/log-session-end.sh \"$SESSION_ID\" \"$EXIT_REASON\"",
-            "async": true
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-session-end.sh\"",
+            "timeout": 5
           }
         ]
       }

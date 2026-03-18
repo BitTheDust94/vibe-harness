@@ -1,29 +1,33 @@
 #!/bin/bash
-# log-session-end.sh — SessionEnd hook
-# 在会话结束时写一条摘要到 feedback-log.jsonl
+# SessionEnd hook — log session termination for signal counting
 
-LOGDIR="$(dirname "$0")/../autoloop"
-LOGFILE="$LOGDIR/feedback-log.jsonl"
+set -e
 
-mkdir -p "$LOGDIR"
+DIR="$(cd "$(dirname "$0")/.." && pwd)/autoloop"
+mkdir -p "$DIR"
+LOG="$DIR/feedback-log.jsonl"
 
 INPUT=$(cat)
 
-/usr/bin/python3 -c "
-import sys, json, datetime
+python3 -c "
+import json, sys, datetime
 
-input_data = json.loads('''$(echo "$INPUT" | sed "s/'/'\\\\''/g")''')
-session_id = input_data.get('session_id', '')
-reason = input_data.get('reason', 'unknown')
+try:
+    data = json.loads(sys.stdin.read()) if not '''$INPUT'''.strip() else json.loads('''$INPUT''')
+except:
+    sys.exit(0)
+
+session = data.get('session_id', 'unknown')
+reason = data.get('reason', 'unknown')
 
 entry = {
     'ts': datetime.datetime.now().isoformat(),
-    'session': session_id,
+    'session': session,
     'type': 'session_end',
     'reason': reason,
 }
 
-with open('$LOGFILE', 'a') as f:
+with open('$LOG', 'a') as f:
     f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 " 2>/dev/null
 

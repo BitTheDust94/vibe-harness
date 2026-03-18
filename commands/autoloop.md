@@ -1,14 +1,66 @@
 ---
-description: 分析反馈信号并优化 harness
+description: Analyze feedback signals and optimize harness rules
 ---
 
-读取以下文件并执行优化分析：
+Execute the harness self-optimization loop:
 
-1. 先读取 `.claude/autoloop/program.md` 了解完整流程
-2. 读取 `.claude/autoloop/feedback-log.jsonl` 获取反馈信号
-3. 读取 `CLAUDE.md` 了解当前 harness 配置
-4. 读取 `.claude/autoloop/experiments.tsv` 了解历史实验
+## Step 1: Load data
 
-按照 program.md 中定义的流程执行：信号聚合 → 假设生成 → 评估 → 应用改进。
+Read these files:
+1. `.claude/autoloop/program.md` — Full process definition
+2. `.claude/autoloop/feedback-log.jsonl` — Feedback signals
+3. `.claude/autoloop/experiments.tsv` — Experiment history
+4. `CLAUDE.md` — Current harness configuration
+5. `PROGRESS.md` — Lesson log
 
-输出完整的 AutoLoop Report。
+## Step 2: Signal aggregation
+
+Per program.md:
+- Count signals by category
+- Identify high-frequency categories (>= 3 occurrences)
+- Identify repeated mistakes (repeat: true)
+- Check experiment outcomes (did the rule prevent the mistake?)
+
+## Step 3: Hypothesis generation + evaluation
+
+- Generate improvement hypotheses for high-frequency/repeated categories
+- Check experiments.tsv to avoid duplicate attempts
+- Evaluate ROI (frequency x severity / rule complexity)
+
+## Step 4: Apply improvements
+
+- Write passing hypotheses to CLAUDE.md or AGENTS.md
+- Record in experiments.tsv (outcome = pending)
+- Update existing experiment outcomes (effective/ineffective)
+
+## Step 5: Cleanup
+
+- Experiments effective for 10+ sessions → mark "internalized"
+- Archive feedback-log entries older than 30 days
+
+## Step 6: Output AutoLoop Report
+
+```
+=== AutoLoop Report ===
+
+Signal stats:
+  Total signals: N
+  High-frequency: [...]
+  Repeated mistakes: [...]
+
+New hypotheses:
+  1. [description] → suggest writing to [file:location]
+  2. ...
+
+Rule effectiveness:
+  Effective (keep): N
+  Pending: N
+  Ineffective (upgrade): N
+
+Changes made:
+  - [what changed, where]
+
+========================
+```
+
+$ARGUMENTS

@@ -1,29 +1,34 @@
-# Finance Benchmarks / 金融行业基准测试
+# Finance Benchmarks
 
-## Task 1: 财务数据提取与交叉验证
-Given a company's quarterly report (10-Q), extract:
-- Revenue, operating income, net income, free cash flow
-- Compare with consensus estimates
-- Flag any inconsistencies between management discussion and actual numbers
-- Output in structured markdown table
+Validates financial analysis quality. Run after `/autoloop` applies rule changes.
 
-评估标准: 数据准确率、异常值识别率、格式一致性
+## BENCH-F01: Quarterly Report Extraction
 
-## Task 2: 投资备忘录起草
-Given 5 research notes on a single company, generate an investment memo covering:
-- Thesis and key legs
-- Bull/bear case with supporting evidence
-- Valuation summary (EV/EBITDA, P/E, DCF range)
-- Key risks and mitigants
-- Recommendation
+**Task**: Extract key metrics (revenue, operating income, net income, FCF) from a quarterly earnings report. Identify discrepancies between reported figures and management commentary.
 
-评估标准: 逻辑完整度、证据引用准确度、风险覆盖度
+**Pass criteria**:
+- [ ] All key metrics extracted with correct units
+- [ ] At least one discrepancy identified between numbers and narrative
+- [ ] Sources cited for each metric
+- [ ] No hallucinated figures
 
-## Task 3: 可比公司分析表
-Given a target company and industry, build a comps table:
-- Select 5-8 comparable companies with rationale
-- Key metrics: revenue growth, margins, multiples
-- Highlight where target trades at premium/discount
-- Note any data gaps
+## BENCH-F02: Investment Memo Synthesis
 
-评估标准: 可比公司选择合理性、指标完整度、分析深度
+**Task**: Synthesize 5+ research documents into a cohesive investment memo with bull/bear cases, valuation framework, and risk assessment.
+
+**Pass criteria**:
+- [ ] Both bull and bear cases presented with evidence
+- [ ] Valuation framework uses appropriate methodology
+- [ ] Key risks identified with materiality assessment
+- [ ] Cross-document contradictions flagged
+- [ ] No unsupported claims
+
+## BENCH-F03: Comparable Analysis
+
+**Task**: Build a comp table contextualizing a target company against 5-8 peers.
+
+**Pass criteria**:
+- [ ] Peer selection justified
+- [ ] Metrics consistent across companies
+- [ ] Outliers identified and explained
+- [ ] Time periods aligned

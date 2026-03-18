@@ -1,186 +1,200 @@
-# vibe-harness
+# vibe-harness v2: Self-Improving AI Harness
 
-**Your AI learns your standards as you work.**
+A self-improving system for Claude Code that learns from your professional judgment. Accept, reject, or modify AI output during normal work — the system captures these signals and iteratively refines the rules governing AI behavior.
 
-A self-improving harness for Claude Code. Every time you accept, reject, or modify AI output, the system silently captures that signal and iterates — refining rules, constraints, and domain guidelines in real time, so AI output gets progressively closer to your professional standards.
+## What's New in v2
 
-Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) — but instead of running overnight experiments, vibe-harness learns continuously from your natural workflow. No extra steps. Just work as usual, and the harness evolves around you.
-
-```
-You work with AI → accept / reject / modify → signal captured →
-harness self-iterates → next output is better → repeat
-```
-
-## The Problem
-
-AI output quality is inconsistent — whether you're writing code, drafting investment memos, reviewing contracts, or analyzing clinical trial data.
-
-You correct the same mistakes repeatedly. You know what "good" looks like in your domain, but that knowledge lives in your head, not in your tooling. Every new session starts from zero — AI doesn't remember that you rejected the same bad pattern yesterday.
-
-**Without domain-calibrated constraints, AI outputs drift toward generic, mediocre results.** A financial model missing key risk factors. A legal review that overlooks non-standard clauses. A research paper with the wrong statistical test. Code with security vulnerabilities you've caught three times before.
-
-## The Solution: A Harness That Learns From You
-
-Your professional judgment is the training signal. Every "不对", every "perfect", every "改一下" is a data point. vibe-harness captures these signals in real time, identifies patterns, and updates the rules that guide AI — so the same mistake doesn't happen twice.
-
-| What | How |
-|---|---|
-| You say "不对" or "wrong" | Logged as rejection signal → pattern analyzed → new rule added |
-| You say "好" or "perfect" | Logged as acceptance signal → successful pattern reinforced |
-| You say "改一下" or "adjust" | Logged as modification signal → constraint refined |
-| Signals accumulate | `/autoloop` analyzes patterns → proposes harness improvements |
-| Harness updates | Next AI output follows updated rules → fewer corrections needed |
-
-**You're not training a model. You're training a harness.** The LLM stays the same. What changes is how you use it — the rules it follows, the constraints it respects, the domain standards it adheres to.
+- **PROGRESS.md** — Human-readable mistake/learning log alongside machine-readable JSONL
+- **Severity + repeat tracking** — Distinguish critical errors from minor issues, flag repeated mistakes
+- **Rule reference tracking** — Link signals to the specific rules they triggered (or should have)
+- **Positive reinforcement** — Track what works well, not just what fails
+- **Experiment lifecycle** — `pending → effective → internalized` with outcome validation
+- **Two-command system** — `/progress` (scan + record) + `/autoloop` (analyze + optimize)
+- **Upgraded hooks** — Better signal capture with structured metadata
 
 ## How It Works
 
-### 1. Silent Signal Capture (automatic, zero effort)
-
-Three hooks run in the background during your normal work. You don't need to do anything different.
-
-- **PostToolUse** → logs every AI action (file edits, commands) with timestamp
-- **UserPromptSubmit** → detects feedback in your natural language (English and Chinese):
-  - **Reject**: "wrong / not right / undo / 不对 / 重新 / 离谱 / 数字不对 / 逻辑不通"
-  - **Accept**: "good / perfect / love it / 好 / 完美 / 就是这个 / 数据对了 / 分析到位"
-  - **Modify**: "instead / adjust / a bit / 改一下 / 稍微 / 太大了 / 有点像 / 差一点"
-- **SessionEnd** → records session summary
-
-All signals accumulate in `feedback-log.jsonl`:
-
-```jsonl
-{"ts":"2026-03-18T14:30:01","signal":"reject","confidence":0.8,"prompt_preview":"数字不对，FCF calculation should exclude one-time items"}
-{"ts":"2026-03-18T14:33:15","signal":"accept","confidence":0.7,"prompt_preview":"good, the comps table looks right now"}
-{"ts":"2026-03-18T14:35:00","signal":"modify","confidence":0.6,"prompt_preview":"analysis is close but missing regulatory risk section"}
-{"ts":"2026-03-18T15:01:42","signal":"accept","confidence":0.7,"prompt_preview":"完美，就是这个"}
+```
+You work normally with Claude Code
+         ↓
+Hooks silently capture signals (accept/reject/modify + tool usage)
+         ↓
+/progress scans the conversation, records mistakes + learnings
+         ↓
+Signals accumulate in feedback-log.jsonl
+         ↓
+/autoloop analyzes patterns → proposes rule changes → applies improvements
+         ↓
+Next conversation reads improved rules → fewer mistakes
+         ↓
+/autoloop validates: did the rule work? keep / upgrade / discard
 ```
 
-### 2. Self-Iteration (when you're ready)
+## Quick Start
 
-When enough signals have accumulated (typically 20+ feedback events), trigger analysis:
-
-```
-/autoloop
-```
-
-The agent:
-1. Reads your accumulated feedback signals
-2. Identifies rejection patterns ("60% of rejections are about missing risk factors")
-3. Proposes specific harness improvements (new rules, adjusted constraints)
-4. Runs domain benchmarks to verify improvements don't break other things
-5. Shows you what changed and why
-
-You review and approve. The harness is updated. Next time AI encounters the same situation, it gets it right.
-
-### 3. Continuous Improvement
-
-The cycle never stops. As you keep working, new signals accumulate, new patterns emerge, and the harness keeps evolving. After a few weeks, AI output matches your professional standards with minimal corrections.
-
-```
-Week 1:  You correct AI 10 times / day
-Week 2:  Harness has 5 new rules from your feedback → corrections drop to 6 / day
-Week 4:  15 rules accumulated → corrections drop to 3 / day
-Week 8:  AI output consistently matches your standards
-```
-
-## Works Across Every Domain
-
-Anyone using AI for professional work generates accept/reject signals. vibe-harness turns those signals into a self-improving system.
-
-| Domain | Example Work | What Gets Better Over Time |
-|---|---|---|
-| **Finance / Investment** | Financial models, investment memos, comps analysis, due diligence | Valuation methodology, risk factor coverage, data accuracy |
-| **Scientific Research** | Literature reviews, experiment design, data analysis, paper drafting | Statistical method selection, citation accuracy, gap identification |
-| **Pharma / Biotech** | Clinical trial analysis, pipeline valuation, regulatory filings | Endpoint interpretation, safety signal detection, precedent accuracy |
-| **Legal** | Contract review, case research, due diligence, legal memos | Risk clause identification, precedent relevance, jurisdiction accuracy |
-| **Software Development** | Feature implementation, bug fixes, refactoring, architecture | Code quality, security, framework patterns, test coverage |
-| **Product & Design** | PRDs, UI components, design systems, user flows | Design consistency, interaction patterns, brand alignment |
-| **Content & Marketing** | Copywriting, strategy docs, market analysis | Tone calibration, audience fit, brand voice consistency |
-
-### Pre-built Domain Benchmarks
-
-Each domain has a benchmark suite with evaluation tasks. Pick the ones that match your work:
-
-```
-autoloop/benchmarks/
-├── coding.md          # Software development
-├── product.md         # Product design & strategy
-├── ui.md              # UI/UX design
-├── finance.md         # Finance & investment
-├── research.md        # Scientific research
-├── pharma.md          # Pharma & biotech
-└── legal.md           # Legal
-```
-
-**Don't see your domain?** Create your own `benchmarks/your-domain.md` with 3 representative tasks. The system works with any domain where you can evaluate "good vs bad" output.
-
-## Installation
-
-### For Claude Code
+### 1. Copy files into your project
 
 ```bash
-# Clone
-git clone https://github.com/ericsonglab/vibe-harness.git
+# From your project root:
+mkdir -p .claude/autoloop .claude/hooks
 
-# Copy into your project's .claude/ directory
-cp -r vibe-harness/autoloop your-project/.claude/
-cp -r vibe-harness/hooks your-project/.claude/
-cp -r vibe-harness/commands your-project/.claude/
+# Copy autoloop system
+cp vibe-harness/autoloop/program.md .claude/autoloop/
+cp vibe-harness/autoloop/experiments.tsv .claude/autoloop/
+touch .claude/autoloop/feedback-log.jsonl
 
-# Merge hook config into your .claude/settings.json (see settings-example.json)
+# Copy hooks
+cp vibe-harness/hooks/*.sh .claude/hooks/
+chmod +x .claude/hooks/*.sh
+
+# Copy commands
+cp vibe-harness/commands/*.md ~/.claude/commands/
+
+# Copy PROGRESS.md template
+cp vibe-harness/PROGRESS.md ./PROGRESS.md
 ```
 
-### Trigger self-iteration
+### 2. Register hooks
 
-In Claude Code, type `/autoloop` whenever you want the system to analyze accumulated feedback and propose improvements.
+Merge into your `.claude/settings.json` (create if it doesn't exist):
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-feedback.sh\"",
+          "timeout": 5
+        }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-user-prompt.sh\"",
+          "timeout": 5
+        }]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-session-end.sh\"",
+          "timeout": 5
+        }]
+      }
+    ]
+  }
+}
+```
+
+### 3. Add to CLAUDE.md
+
+Add this line to your project's `CLAUDE.md`:
+
+```markdown
+| `PROGRESS.md` | **Must read** — mistakes and lessons learned, do not repeat |
+```
+
+### 4. Use it
+
+```bash
+# After a work session, review what happened:
+/progress
+
+# After 5+ signals accumulate, optimize rules:
+/autoloop
+```
 
 ## File Structure
 
 ```
-.claude/
-├── hooks/
-│   ├── log-feedback.sh          # PostToolUse: records AI actions
-│   ├── log-user-prompt.sh       # UserPromptSubmit: detects accept/reject/modify
-│   └── log-session-end.sh       # SessionEnd: session summary
-├── commands/
-│   └── autoloop.md              # /autoloop slash command
-└── autoloop/
-    ├── program.md               # Self-iteration instructions (you can edit this)
-    ├── feedback-log.jsonl       # Accumulated signals (auto-generated)
-    ├── experiments.tsv          # Iteration history (auto-generated)
-    ├── run-loop.sh              # Batch execution script (optional cron)
-    └── benchmarks/
-        ├── coding.md            # Software development
-        ├── product.md           # Product design
-        ├── ui.md                # UI/UX design
-        ├── finance.md           # Finance & investment
-        ├── research.md          # Scientific research
-        ├── pharma.md            # Pharma & biotech
-        └── legal.md             # Legal
+your-project/
+├── CLAUDE.md                          ← Your project rules (auto-improved by /autoloop)
+├── PROGRESS.md                        ← Human-readable mistake/learning log
+└── .claude/
+    ├── settings.json                  ← Hook registration
+    ├── autoloop/
+    │   ├── program.md                 ← AutoLoop engine logic
+    │   ├── feedback-log.jsonl         ← Raw signals (auto-populated by hooks)
+    │   ├── experiments.tsv            ← Rule experiment tracking
+    │   └── benchmarks/                ← Domain-specific test suites
+    │       ├── coding.md
+    │       ├── finance.md
+    │       └── ...
+    ├── hooks/
+    │   ├── log-feedback.sh            ← PostToolUse: log Edit/Write/Bash calls
+    │   ├── log-user-prompt.sh         ← UserPromptSubmit: detect accept/reject/modify
+    │   └── log-session-end.sh         ← SessionEnd: session summary
+    └── commands/
+        ├── progress.md                ← /progress command definition
+        └── autoloop.md                ← /autoloop command definition
 ```
 
-## The Core Idea
+## Signal Types
 
-> "Any efficiently evaluatable metric can benefit from agent-driven optimization." — Andrej Karpathy
+### Automatic (via hooks)
 
-Your professional judgment is a metric. Every accept/reject is a data point.
+| Hook | Trigger | Signal |
+|------|---------|--------|
+| `log-feedback.sh` | After Edit/Write/Bash | Tool usage with file path + content preview |
+| `log-user-prompt.sh` | User sends message | Accept/reject/modify detection (EN + CN) |
+| `log-session-end.sh` | Session ends | Session boundary marker |
 
-A senior investment analyst knows that FCF calculations should exclude one-time items. A pharma researcher knows that Phase II endpoints need to be contextualized against competitor trials. A lawyer knows that indemnification clauses in SaaS agreements need mutual caps.
+### Manual (via /progress)
 
-This knowledge usually stays in their heads. vibe-harness captures it through natural work signals and encodes it into machine-enforceable rules. No extra steps, no forms to fill, no feedback buttons to click. Just work as you normally do.
+| Category | What it catches |
+|----------|----------------|
+| `code_error` | Bugs introduced, type errors, wrong API usage |
+| `shortcut` | Cutting corners, sampling instead of full coverage |
+| `arch_mistake` | Wrong approach, over-engineering, missed constraints |
+| `rule_violation` | Broke existing CLAUDE.md/AGENTS.md rules |
+| `comms` | Misunderstood user intent, did unrequested work |
+| `repeat` | Same mistake already in PROGRESS.md |
 
-**The harness is the product. The model is commodity.**
+## Experiment Lifecycle
 
-## Requirements
+```
+Hypothesis created → pending
+  ↓
+3+ sessions with zero repeat → effective
+  ↓
+10+ sessions with zero repeat → internalized (rule is now habit)
 
-- [Claude Code](https://claude.ai/code) CLI
-- macOS or Linux (hooks are bash scripts)
+OR
 
-## Credits
+Same mistake repeats → ineffective → upgrade rule (more specific/strict)
+```
 
-- Pattern inspired by [autoresearch](https://github.com/karpathy/autoresearch) by Andrej Karpathy
-- Harness engineering concepts from [OpenAI's Codex team](https://openai.com/index/harness-engineering/) and [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)
-- Born from ZC, founder of [Penso](https://penso.so) and Serendipity Ventures
+## Supported Domains
+
+Pre-built benchmarks in `autoloop/benchmarks/`:
+
+| Domain | File | Tasks |
+|--------|------|-------|
+| Software Development | `coding.md` | Module creation, type fixes, error handling |
+| Finance | `finance.md` | Metric extraction, investment memo, comp analysis |
+| Research | `research.md` | Literature review, methodology, synthesis |
+| Pharma | `pharma.md` | Safety data, regulatory, trial analysis |
+| Legal | `legal.md` | Contract review, risk assessment, compliance |
+| Product | `product.md` | PRD review, user flow, metrics |
+| UI Design | `ui.md` | Component design, accessibility, responsiveness |
+
+Create custom benchmarks by adding new `.md` files to the benchmarks directory.
+
+## Design Principles
+
+1. **Silent capture** — Hooks run in background, never interrupt workflow
+2. **Human-readable + machine-readable** — PROGRESS.md for humans, JSONL for automation
+3. **Specific rules over vague guidelines** — "Check chunk is delta vs full before SSE integration" beats "be careful with streaming"
+4. **3 precise rules > 10 fuzzy rules** — Every rule has cognitive cost
+5. **Reversible** — Every change can be rolled back by the next iteration
+6. **CLAUDE.md stays lean** — If adding a rule, consider removing a low-value one
 
 ## License
 
